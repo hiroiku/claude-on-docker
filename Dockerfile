@@ -1,6 +1,5 @@
-FROM node:20-bookworm-slim
+FROM debian:bookworm-slim
 
-# System packages
 RUN apt-get update && apt-get install -y --no-install-recommends \
     git \
     curl \
@@ -9,33 +8,17 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     vim \
     less \
     procps \
-    sudo \
-    iptables \
-    ipset \
-    iproute2 \
-    dnsutils \
+    ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Claude Code
-RUN npm install -g @anthropic-ai/claude-code
-
-# Create non-root user with sudo access
-RUN useradd -m -s /bin/bash claude \
-    && echo "claude ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/claude
-
-# Create directories
+RUN useradd -m -s /bin/bash claude
 RUN mkdir -p /workspace /home/claude/.claude \
     && chown -R claude:claude /workspace /home/claude/.claude
 
-# Disable auto-updater inside container
+USER claude
+RUN curl -fsSL https://claude.ai/install.sh | bash
+ENV PATH="/home/claude/.local/bin:${PATH}"
 ENV DISABLE_AUTOUPDATER=1
 
-# Copy scripts
-COPY entrypoint.sh /usr/local/bin/entrypoint.sh
-COPY init-firewall.sh /usr/local/bin/init-firewall.sh
-RUN chmod +x /usr/local/bin/entrypoint.sh /usr/local/bin/init-firewall.sh
-
-USER claude
 WORKDIR /workspace
-
-ENTRYPOINT ["entrypoint.sh"]
+ENTRYPOINT ["claude", "--dangerously-skip-permissions"]

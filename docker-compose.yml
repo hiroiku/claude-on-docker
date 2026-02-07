@@ -3,16 +3,9 @@ services:
     build: .
     stdin_open: true
     tty: true
-    cap_add:
-      - NET_ADMIN
-      - NET_RAW
     volumes:
       - ./workspace:/workspace
       - claude-config:/home/claude/.claude
-    env_file:
-      - .env
-    environment:
-      - ENABLE_FIREWALL=true
 
 volumes:
   claude-config:
